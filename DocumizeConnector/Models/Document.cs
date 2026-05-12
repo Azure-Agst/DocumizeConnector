@@ -49,7 +49,7 @@ namespace DocumizeConnector.Models
             schema.PropertyList.Add(
                 new SourcePropertyDefinition
                 {
-                    Name = nameof(Id),
+                    Name = nameof(ID),
                     Type = SourcePropertyType.String,
                 });
 

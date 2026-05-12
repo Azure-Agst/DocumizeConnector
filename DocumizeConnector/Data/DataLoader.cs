@@ -44,7 +44,7 @@ namespace DocumizeConnector.Data
                 if (response.IsSuccessStatusCode)
                 {
                     var responseString = await response.Content.ReadAsStringAsync();
-                    var authRes = JsonConvert.DeserializeObject<DocuAuth>(responseString);
+                    var authRes = JsonConvert.DeserializeObject<BearerAuth>(responseString);
                     return authRes.Bearer;
                 }
                 else

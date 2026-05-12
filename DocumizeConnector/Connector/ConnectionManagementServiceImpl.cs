@@ -4,10 +4,14 @@
 // </copyright>
 // ---------------------------------------------------------------------------
 
+using DocumizeConnector.Models;
 using Grpc.Core;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Graph.Connectors.Contracts.Grpc;
+using Newtonsoft.Json;
 using Serilog;
 using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 using static Microsoft.Graph.Connectors.Contracts.Grpc.ConnectionManagementService;
 
@@ -26,10 +30,31 @@ namespace DocumizeConnector.Connector
         /// <param name="request">Request containing all the authentication information</param>
         /// <param name="context">Grpc caller context</param>
         /// <returns>Response with validation result</returns>
-        public override Task<ValidateAuthenticationResponse> ValidateAuthentication(ValidateAuthenticationRequest request, ServerCallContext context)
+        public override Task<ValidateAuthenticationResponse> ValidateAuthentication(ValidateAuthenticationRequest _request, ServerCallContext context)
         {
             Log.Information("Validating Authentication");
-            return this.BuildAuthValidationResponse(false, "Not Implemented");
+
+            ServiceProvider serviceProvider = new ServiceCollection().AddHttpClient().BuildServiceProvider();
+            using (var httpClient = serviceProvider.GetService<IHttpClientFactory>().CreateClient())
+            {
+                var authData = _request.AuthenticationData;
+                var dataSourceURL = authData.DatasourceUrl + "/api/public/authenticate";
+                var request = new HttpRequestMessage(HttpMethod.Post, new Uri(dataSourceURL));
+
+                request.Headers.Add("Authorization", "Basic " + authData.BasicCredential.ToString());
+                Log.Debug(authData.BasicCredential.ToString());
+
+                var response = httpClient.Send(request);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return this.BuildAuthValidationResponse(true, "Not Implemented");
+                }
+                else
+                {
+                    return this.BuildAuthValidationResponse(false, "Bad Authentication");
+                }
+            }
         }
 
         private Task<ValidateAuthenticationResponse> BuildAuthValidationResponse(bool accessSuccess, string errorMessageOnFailure = "")
@@ -73,15 +98,36 @@ namespace DocumizeConnector.Connector
         public override Task<ValidateCustomConfigurationResponse> ValidateCustomConfiguration(ValidateCustomConfigurationRequest request, ServerCallContext context)
         {
             Log.Information("Validating custom configuration");
+            ValidateCustomConfigurationResponse response;
 
-            ValidateCustomConfigurationResponse response = new ValidateCustomConfigurationResponse()
+            try
             {
-                Status = new OperationStatus()
+                if (!string.IsNullOrWhiteSpace(request.CustomConfiguration.Configuration))
                 {
-                    Result = OperationResult.ValidationFailure,
-                    StatusMessage = "Not Implemented",
-                },
-            };
+                    var _ = JsonConvert.DeserializeObject<CustomParams>(request.CustomConfiguration.Configuration);
+                }
+
+                response = new ValidateCustomConfigurationResponse
+                {
+                    Status = new OperationStatus
+                    {
+                        Result = OperationResult.Success,
+                    }
+                };
+            }
+            catch (Exception ex) 
+            {
+                Log.Error(ex, "Error while validating custom configuration");
+                response = new ValidateCustomConfigurationResponse()
+                {
+                    Status = new OperationStatus()
+                    {
+                        Result = OperationResult.ValidationFailure,
+                        StatusMessage = ex.Message
+                    },
+                };
+                return Task.FromResult(response);
+            }
 
             return Task.FromResult(response);
         }
@@ -99,17 +145,13 @@ namespace DocumizeConnector.Connector
         public override Task<GetDataSourceSchemaResponse> GetDataSourceSchema(GetDataSourceSchemaRequest request, ServerCallContext context)
         {
             Log.Information("Trying to fetch datasource schema");
-
-            var opStatus = new OperationStatus()
-            {
-                Result = OperationResult.ValidationFailure,
-                StatusMessage = "Not Implemented",
-            };
-
             GetDataSourceSchemaResponse response = new GetDataSourceSchemaResponse()
             {
-                DataSourceSchema = null,
-                Status = opStatus,
+                DataSourceSchema = Document.GetSchema(),
+                Status = new OperationStatus()
+                {
+                    Result = OperationResult.Success,
+                },
             };
 
             return Task.FromResult(response);

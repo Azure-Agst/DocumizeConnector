@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace DocumizeConnector.Models
 {
-    internal class DocuAuth
+    internal class BearerAuth
     {
         [JsonProperty("bearer", Required = Required.Always)]
         public string Bearer { get; set; }
