@@ -1,4 +1,5 @@
 ﻿using DocumizeConnector.Models;
+using DocumizeConnector.Tools;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Graph.Connectors.Contracts.Grpc;
 using Newtonsoft.Json;
@@ -152,6 +153,10 @@ namespace DocumizeConnector.Data
                             string clean = Regex.Replace(body, @"<img\b[^>]*>", string.Empty, RegexOptions.IgnoreCase);
                             doc.Body = clean;
 
+                            // Calculate URL
+                            doc.URL = URL.UrlFromDocument(authData.DatasourceUrl, space, doc);
+                            //Log.Information("URL: " + doc.URL);
+
                             // Convert to CrawlItem
                             crawlItems.Add(doc.ToCrawlItem());
                             itemsRemaining = true; // Note: Not sure this is needed? Maybe this is for pagination?
@@ -210,6 +215,10 @@ namespace DocumizeConnector.Data
                             string body = await GetDocumentBody(authData, bearer, doc);
                             string clean = Regex.Replace(body, @"<img\b[^>]*>", string.Empty, RegexOptions.IgnoreCase);
                             doc.Body = clean;
+
+                            // Calculate URL
+                            doc.URL = URL.UrlFromDocument(authData.DatasourceUrl, space, doc);
+                            //Log.Information("URL: " + doc.URL);
 
                             // Convert to CrawlItem
                             crawlItems.Add(doc.ToIncrementalCrawlItem());

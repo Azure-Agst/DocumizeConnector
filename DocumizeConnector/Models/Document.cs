@@ -28,9 +28,13 @@ namespace DocumizeConnector.Models
         [JsonProperty("excerpt", Required = Required.Always)]
         public string Description { get; set; }
 
-        // NOTE: This one is populated by a call to a different endpoint, so it's not always required
-        [JsonProperty("body")]
+        // NOTE: These two are populated manually, so it's not required
+        [JsonIgnore]
         public string Body { get; set; }
+
+        [JsonIgnore]
+        public string URL { get; set; }
+        // End manual fields
 
         [JsonProperty("tags", DefaultValueHandling = DefaultValueHandling.Populate)]
         public string Tags { get; set; }
@@ -65,6 +69,20 @@ namespace DocumizeConnector.Models
                 new SourcePropertyDefinition
                 {
                     Name = nameof(Description),
+                    Type = SourcePropertyType.String,
+                });
+
+            schema.PropertyList.Add(
+                new SourcePropertyDefinition
+                {
+                    Name = nameof(Body),
+                    Type = SourcePropertyType.String,
+                });
+
+            schema.PropertyList.Add(
+                new SourcePropertyDefinition
+                {
+                    Name = nameof(URL),
                     Type = SourcePropertyType.String,
                 });
 
@@ -181,13 +199,6 @@ namespace DocumizeConnector.Models
                     StringValue = this.ID,
                 });
 
-            //sourcePropertyValueMap.Values.Add(
-            //    nameof(this.Url),
-            //    new GenericType
-            //    {
-            //        StringValue = this.Url,
-            //    });
-
             sourcePropertyValueMap.Values.Add(
                 nameof(this.Title),
                 new GenericType
@@ -207,6 +218,13 @@ namespace DocumizeConnector.Models
                 new GenericType
                 {
                     StringValue = this.Body,
+                });
+
+            sourcePropertyValueMap.Values.Add(
+                nameof(this.URL),
+                new GenericType
+                {
+                    StringValue = this.URL,
                 });
 
             sourcePropertyValueMap.Values.Add(

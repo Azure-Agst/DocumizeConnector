@@ -56,6 +56,8 @@ namespace DocumizeConnector.Connector
                     }
                 }
 
+                Log.Information("GetCrawlStream Finished");
+
             }
             catch (Exception ex)
             {
@@ -115,6 +117,8 @@ namespace DocumizeConnector.Connector
                         await responseStream.WriteAsync(csBit).ConfigureAwait(false);
                     }
                 }
+
+                Log.Information("GetIncrementalCrawlStream Finished");
 
             }
             catch (Exception ex)
