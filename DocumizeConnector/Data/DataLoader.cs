@@ -149,8 +149,10 @@ namespace DocumizeConnector.Data
 
                             // Convert to CrawlItem
                             crawlItems.Add(doc.ToCrawlItem());
-                            itemsRemaining = true;
+                            itemsRemaining = true; // Note: Not sure this is needed? Maybe this is for pagination?
                         }
+
+                        itemsRemaining = false;
                     }
 
                     // Return status
