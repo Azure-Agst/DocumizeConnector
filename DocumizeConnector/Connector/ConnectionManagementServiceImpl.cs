@@ -34,26 +34,35 @@ namespace DocumizeConnector.Connector
         {
             Log.Information("Validating Authentication");
 
-            ServiceProvider serviceProvider = new ServiceCollection().AddHttpClient().BuildServiceProvider();
-            using (var httpClient = serviceProvider.GetService<IHttpClientFactory>().CreateClient())
+            try
             {
-                var authData = _request.AuthenticationData;
-                var dataSourceURL = authData.DatasourceUrl + "/api/public/authenticate";
-                var request = new HttpRequestMessage(HttpMethod.Post, new Uri(dataSourceURL));
-
-                request.Headers.Add("Authorization", "Basic " + authData.BasicCredential.ToString());
-                Log.Debug(authData.BasicCredential.ToString());
-
-                var response = httpClient.Send(request);
-
-                if (response.IsSuccessStatusCode)
+                ServiceProvider serviceProvider = new ServiceCollection().AddHttpClient().BuildServiceProvider();
+                using (var httpClient = serviceProvider.GetService<IHttpClientFactory>().CreateClient())
                 {
-                    return this.BuildAuthValidationResponse(true, "Not Implemented");
+                    var authData = _request.AuthenticationData;
+                    var dataSourceURL = authData.DatasourceUrl + "/api/public/authenticate";
+                    var request = new HttpRequestMessage(HttpMethod.Post, new Uri(dataSourceURL));
+
+                    var basicCreds = authData.BasicCredential.Username + ":" + authData.BasicCredential.Secret;
+                    var basicHex = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(basicCreds));
+                    request.Headers.Add("Authorization", "Basic " + basicHex);
+
+                    var response = httpClient.Send(request);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        return this.BuildAuthValidationResponse(true, "Not Implemented");
+                    }
+                    else
+                    {
+                        return this.BuildAuthValidationResponse(false, "Bad Authentication");
+                    }
                 }
-                else
-                {
-                    return this.BuildAuthValidationResponse(false, "Bad Authentication");
-                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Error while valicating auth: " + ex.Message.ToString());
+                return this.BuildAuthValidationResponse(false, "Exception Thrown!");
             }
         }
 

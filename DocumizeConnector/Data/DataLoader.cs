@@ -35,9 +35,10 @@ namespace DocumizeConnector.Data
             {
                 var dataSourceURL = authData.DatasourceUrl + "/api/public/authenticate";
                 var request = new HttpRequestMessage(HttpMethod.Post, new Uri(dataSourceURL));
-                
-                request.Headers.Add("Authorization", "Basic " + authData.BasicCredential.ToString());
-                Log.Debug(authData.BasicCredential.ToString());
+
+                var basicCreds = authData.BasicCredential.Username + ":" + authData.BasicCredential.Secret;
+                var basicHex = Convert.ToBase64String(Encoding.UTF8.GetBytes(basicCreds));
+                request.Headers.Add("Authorization", "Basic " + basicHex);
 
                 var response = await httpClient.SendAsync(request);
 
@@ -84,6 +85,7 @@ namespace DocumizeConnector.Data
 
         public async Task<T> getDocumizeData<T>(AuthenticationData authData, string bearer, string path)
         {
+            Log.Information("Fatching " + path);
             using (var httpClient = this.httpClientFactory.CreateClient())
             {
                 var dataSourceURL = authData.DatasourceUrl + path;
