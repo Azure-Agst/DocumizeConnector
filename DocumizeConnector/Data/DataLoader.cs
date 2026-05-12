@@ -87,7 +87,7 @@ namespace DocumizeConnector.Data
                 // Remove image tags from the body before appending
                 // NOTE: Not stripping images can sometimes cause pages to go over 4MB upload limit.
                 string clean = Regex.Replace(page.Body, @"<img\b[^>]*>", string.Empty, RegexOptions.IgnoreCase);
-                fullBody += page.Body;
+                fullBody += clean;
             }
 
             return fullBody;
