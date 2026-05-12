@@ -9,7 +9,7 @@ namespace DocumizeConnector.Models
 {
     internal class BearerAuth
     {
-        [JsonProperty("bearer", Required = Required.Always)]
+        [JsonProperty("token", Required = Required.Always)]
         public string Bearer { get; set; }
     }
 }
