@@ -9,7 +9,9 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace DocumizeConnector.Data
 {
@@ -144,8 +146,11 @@ namespace DocumizeConnector.Data
                         if (spaceDocs == null) continue; // Edge case: Empty Space
                         foreach (var doc in spaceDocs)
                         {
-                            // Get body
-                            doc.Body = await GetDocumentBody(authData, bearer, doc);
+                            // Get body (w/ images stripped)
+                            // NOTE: Not stripping images can sometimes cause pages to go over 4MB upload limit.
+                            string body = await GetDocumentBody(authData, bearer, doc);
+                            string clean = Regex.Replace(body, @"<img\b[^>]*>", string.Empty, RegexOptions.IgnoreCase);
+                            doc.Body = clean;
 
                             // Convert to CrawlItem
                             crawlItems.Add(doc.ToCrawlItem());
@@ -200,8 +205,11 @@ namespace DocumizeConnector.Data
                         // Loop
                         foreach (var doc in spaceDocs)
                         {
-                            // Get body
-                            doc.Body = await GetDocumentBody(authData, bearer, doc);
+                            // Get body (w/ images stripped)
+                            // NOTE: Not stripping images can sometimes cause pages to go over 4MB upload limit.
+                            string body = await GetDocumentBody(authData, bearer, doc);
+                            string clean = Regex.Replace(body, @"<img\b[^>]*>", string.Empty, RegexOptions.IgnoreCase);
+                            doc.Body = clean;
 
                             // Convert to CrawlItem
                             crawlItems.Add(doc.ToIncrementalCrawlItem());
