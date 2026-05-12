@@ -15,6 +15,12 @@ namespace DocumizeConnector.Models
         [JsonProperty("id", DefaultValueHandling = DefaultValueHandling.Populate, Required = Required.Always)]
         public string ID { get; set; }
 
+        [JsonProperty("title", Required = Required.Always)]
+        public string Title { get; set; }
+
+        [JsonProperty("numbering", Required = Required.Always)]
+        public string Numbering { get; set; }
+
         [JsonProperty("body", Required = Required.Always)]
         public string Body { get; set; }
 

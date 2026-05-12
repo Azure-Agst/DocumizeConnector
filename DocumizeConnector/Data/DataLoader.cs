@@ -80,8 +80,13 @@ namespace DocumizeConnector.Data
             var path = "/api/documents/" + doc.ID + "/pages";
             var pages = await getDocumizeData<List<Page>>(authData, bearer, path);
 
-            string fullBody = "";
-            foreach (var page in pages) { 
+            string fullBody = "<h1>" + doc.Title + "</h1>";
+            foreach (var page in pages) {
+                fullBody += "<h2>" + page.Numbering + ". " + page.Title + "</h2>";
+
+                // Remove image tags from the body before appending
+                // NOTE: Not stripping images can sometimes cause pages to go over 4MB upload limit.
+                string clean = Regex.Replace(page.Body, @"<img\b[^>]*>", string.Empty, RegexOptions.IgnoreCase);
                 fullBody += page.Body;
             }
 
@@ -148,10 +153,7 @@ namespace DocumizeConnector.Data
                         foreach (var doc in spaceDocs)
                         {
                             // Get body (w/ images stripped)
-                            // NOTE: Not stripping images can sometimes cause pages to go over 4MB upload limit.
-                            string body = await GetDocumentBody(authData, bearer, doc);
-                            string clean = Regex.Replace(body, @"<img\b[^>]*>", string.Empty, RegexOptions.IgnoreCase);
-                            doc.Body = clean;
+                            doc.Body = await GetDocumentBody(authData, bearer, doc);
 
                             // Calculate URL
                             doc.URL = URL.UrlFromDocument(authData.DatasourceUrl, space, doc);
@@ -211,10 +213,7 @@ namespace DocumizeConnector.Data
                         foreach (var doc in spaceDocs)
                         {
                             // Get body (w/ images stripped)
-                            // NOTE: Not stripping images can sometimes cause pages to go over 4MB upload limit.
-                            string body = await GetDocumentBody(authData, bearer, doc);
-                            string clean = Regex.Replace(body, @"<img\b[^>]*>", string.Empty, RegexOptions.IgnoreCase);
-                            doc.Body = clean;
+                            doc.Body = await GetDocumentBody(authData, bearer, doc);
 
                             // Calculate URL
                             doc.URL = URL.UrlFromDocument(authData.DatasourceUrl, space, doc);
