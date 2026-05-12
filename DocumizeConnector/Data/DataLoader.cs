@@ -141,6 +141,7 @@ namespace DocumizeConnector.Data
                     {
                         // Get all docs in space
                         var spaceDocs = await GetDocumentsInSpace(authData, bearer, space);
+                        if (spaceDocs == null) continue; // Edge case: Empty Space
                         foreach (var doc in spaceDocs)
                         {
                             // Get body

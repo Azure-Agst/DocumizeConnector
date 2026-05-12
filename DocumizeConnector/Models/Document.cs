@@ -28,11 +28,12 @@ namespace DocumizeConnector.Models
         [JsonProperty("excerpt", Required = Required.Always)]
         public string Description { get; set; }
 
-        [JsonProperty("body", Required = Required.Always)]
+        // NOTE: This one is populated by a call to a different endpoint, so it's not always required
+        [JsonProperty("body")]
         public string Body { get; set; }
 
         [JsonProperty("tags", DefaultValueHandling = DefaultValueHandling.Populate)]
-        public List<string> Tags { get; set; }
+        public string Tags { get; set; }
 
         [JsonProperty("created", Required = Required.Always)]
         public DateTime CreatedAt { get; set; }
@@ -71,7 +72,7 @@ namespace DocumizeConnector.Models
                 new SourcePropertyDefinition
                 {
                     Name = nameof(Tags),
-                    Type = SourcePropertyType.StringCollection,
+                    Type = SourcePropertyType.String,
                 });
 
             schema.PropertyList.Add(
@@ -208,16 +209,11 @@ namespace DocumizeConnector.Models
                     StringValue = this.Body,
                 });
 
-            var tagPropertyValue = new StringCollectionType();
-            foreach (var tag in this.Tags)
-            {
-                tagPropertyValue.Values.Add(tag);
-            }
             sourcePropertyValueMap.Values.Add(
                 nameof(this.Tags),
                 new GenericType
                 {
-                    StringCollectionValue = tagPropertyValue,
+                    StringValue = this.Tags,
                 });
 
             sourcePropertyValueMap.Values.Add(
