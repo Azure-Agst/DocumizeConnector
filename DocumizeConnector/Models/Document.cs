@@ -20,7 +20,7 @@ namespace DocumizeConnector.Models
     {
         [Key]
         [JsonProperty("id", DefaultValueHandling = DefaultValueHandling.Populate, Required = Required.Always)]
-        public string Id { get; set; }
+        public string ID { get; set; }
 
         [JsonProperty("name", Required = Required.Always)]
         public string Title { get; set; }
@@ -34,11 +34,11 @@ namespace DocumizeConnector.Models
         [JsonProperty("tags", DefaultValueHandling = DefaultValueHandling.Populate)]
         public List<string> Tags { get; set; }
 
-        [JsonProperty("created_at", Required = Required.Always)]
+        [JsonProperty("created", Required = Required.Always)]
         public DateTime CreatedAt { get; set; }
 
         [DefaultValue(null)]
-        [JsonProperty("updated_at", DefaultValueHandling = DefaultValueHandling.Populate)]
+        [JsonProperty("revised", DefaultValueHandling = DefaultValueHandling.Populate)]
         public DateTime UpdatedAt { get; set; }
 
 
@@ -99,7 +99,7 @@ namespace DocumizeConnector.Models
                 return new CrawlItem
                 {
                     ItemType = CrawlItem.Types.ItemType.ContentItem,
-                    ItemId = this.Id.ToString(CultureInfo.InvariantCulture),
+                    ItemId = this.ID.ToString(CultureInfo.InvariantCulture),
                     ContentItem = this.GetContentItem(),
                 };
             }
@@ -117,7 +117,7 @@ namespace DocumizeConnector.Models
                 return new IncrementalCrawlItem
                 {
                     ItemType = IncrementalCrawlItem.Types.ItemType.ContentItem,
-                    ItemId = this.Id.ToString(CultureInfo.InvariantCulture),
+                    ItemId = this.ID.ToString(CultureInfo.InvariantCulture),
                     ContentItem = this.GetContentItem(),
                 };
             }
@@ -174,10 +174,10 @@ namespace DocumizeConnector.Models
             SourcePropertyValueMap sourcePropertyValueMap = new SourcePropertyValueMap();
 
             sourcePropertyValueMap.Values.Add(
-                nameof(this.Id),
+                nameof(this.ID),
                 new GenericType
                 {
-                    StringValue = this.Id,
+                    StringValue = this.ID,
                 });
 
             //sourcePropertyValueMap.Values.Add(

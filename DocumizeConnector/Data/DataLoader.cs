@@ -69,6 +69,18 @@ namespace DocumizeConnector.Data
             var path = "/api/documents?space=" + space.ID;
             return await getDocumizeData<List<Document>>(authData, bearer, path);
         }
+        public async Task<string> GetDocumentBody(AuthenticationData authData, string bearer, Document doc)
+        {
+            var path = "/api/documents/" + doc.ID + "/pages";
+            var pages = await getDocumizeData<List<Page>>(authData, bearer, path);
+
+            string fullBody = "";
+            foreach (var page in pages) { 
+                fullBody += page.Body;
+            }
+
+            return fullBody;
+        }
 
         public async Task<T> getDocumizeData<T>(AuthenticationData authData, string bearer, string path)
         {
@@ -127,7 +139,10 @@ namespace DocumizeConnector.Data
                         var spaceDocs = await GetDocumentsInSpace(authData, bearer, space);
                         foreach (var doc in spaceDocs)
                         {
-                            // Append to CrawlItem
+                            // Get body
+                            doc.Body = await GetDocumentBody(authData, bearer, doc);
+
+                            // Convert to CrawlItem
                             crawlItems.Add(doc.ToCrawlItem());
                             itemsRemaining = true;
                         }
@@ -171,9 +186,17 @@ namespace DocumizeConnector.Data
                     {
                         // Get all docs in space
                         var spaceDocs = await GetDocumentsInSpace(authData, bearer, space);
+
+                        // Filter out all older documents
+                        spaceDocs = spaceDocs.Where(x => x.UpdatedAt > lastModifiedAt).ToList();
+
+                        // Loop
                         foreach (var doc in spaceDocs)
                         {
-                            // Append to CrawlItem
+                            // Get body
+                            doc.Body = await GetDocumentBody(authData, bearer, doc);
+
+                            // Convert to CrawlItem
                             crawlItems.Add(doc.ToIncrementalCrawlItem());
                             itemsRemaining = true;
                             lastModifiedAt = doc.UpdatedAt;

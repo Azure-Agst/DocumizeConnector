@@ -13,6 +13,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using static Microsoft.Graph.Connectors.Contracts.Grpc.ConnectorCrawlerService;
 
+using DocumizeConnector.Data;
+
 namespace DocumizeConnector.Connector
 {
     /// <summary>
@@ -32,15 +34,44 @@ namespace DocumizeConnector.Connector
         /// <returns>Close stream and end function to indicate success and build appropriate OperationStatus object in case of an exception or failure.</returns>
         public override async Task GetCrawlStream(GetCrawlStreamRequest request, IServerStreamWriter<CrawlStreamBit> responseStream, ServerCallContext context)
         {
-            Log.Information("GetCrawlStream Entry");
+            
+            try
+            {
+                Log.Information("GetCrawlStream Entry");
 
-            // Placeholder code to remove compiler errors
-            await Task.FromResult(true).ConfigureAwait(true);
+                var crawlItems = new List<CrawlItem>();
+                bool itemsRemaining = true;
 
-            throw new RpcException(
-                       new Status(
-                           StatusCode.Unimplemented,
-                           "'GetCrawlStream' is not implemented."));
+                while (itemsRemaining)
+                {
+                    var dataLoader = new DataLoader();
+                    (crawlItems, itemsRemaining) = await dataLoader.ExecuteFullCrawl(request.AuthenticationData);
+                    IEnumerator<CrawlItem> ciEnumerator = crawlItems.GetEnumerator();
+                    while (ciEnumerator.MoveNext())
+                    {
+                        CrawlStreamBit csBit = this.GetCrawlStreamBit(ciEnumerator.Current);
+                        await responseStream.WriteAsync(csBit).ConfigureAwait(false);
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex.ToString());
+                CrawlStreamBit csBit = new CrawlStreamBit
+                {
+                    Status = new OperationStatus
+                    {
+                        Result = OperationResult.DatasourceError,
+                        StatusMessage = "Fetching items from datasource failed",
+                        RetryInfo = new RetryDetails
+                        {
+                            Type = RetryDetails.Types.RetryType.Standard
+                        }
+                    }
+                };
+                await responseStream.WriteAsync(csBit).ConfigureAwait(false);
+            }
         }
 
         /// <summary>
@@ -55,15 +86,83 @@ namespace DocumizeConnector.Connector
         /// <returns>Close stream and end function to indicate success and build appropriate OperationStatus object in case of an exception or failure.</returns>
         public override async Task GetIncrementalCrawlStream(GetIncrementalCrawlStreamRequest request, IServerStreamWriter<IncrementalCrawlStreamBit> responseStream, ServerCallContext context)
         {
-            Log.Information("GetIncrementalCrawlStream Entry");
 
-            // Placeholder code to remove compiler errors
-            await Task.FromResult(true).ConfigureAwait(true);
+            try
+            {
+                Log.Information("GetIncrementalCrawlStream Entry");
 
-            throw new RpcException(
-                       new Status(
-                           StatusCode.Unimplemented,
-                           "'GetIncrementalCrawlStream' is not implemented."));
+                var crawlItems = new List<IncrementalCrawlItem>();
+                bool itemsRemaining = true;
+
+                // Also parse the date here :)
+                DateTime lastModifiedAt = request.PreviousCrawlStartTimeInUtc.ToDateTime();
+                if (DateTime.TryParse(request.CrawlProgressMarker.CustomMarkerData, out DateTime result))
+                {
+                    lastModifiedAt = result;
+                }
+
+                while (itemsRemaining)
+                {
+                    var dataLoader = new DataLoader();
+                    (crawlItems, itemsRemaining, lastModifiedAt) = await dataLoader.ExecuteIncrementalCrawl(request.AuthenticationData, lastModifiedAt);
+                    IEnumerator<IncrementalCrawlItem> ciEnumerator = crawlItems.GetEnumerator();
+                    while (ciEnumerator.MoveNext())
+                    {
+                        IncrementalCrawlStreamBit csBit = this.GetIncrementalCrawlStreamBit(ciEnumerator.Current);
+                        await responseStream.WriteAsync(csBit).ConfigureAwait(false);
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex.ToString());
+                IncrementalCrawlStreamBit csBit = new IncrementalCrawlStreamBit
+                {
+                    Status = new OperationStatus
+                    {
+                        Result = OperationResult.DatasourceError,
+                        StatusMessage = "Fetching items from datasource failed",
+                        RetryInfo = new RetryDetails
+                        {
+                            Type = RetryDetails.Types.RetryType.Standard
+                        }
+                    }
+                };
+                await responseStream.WriteAsync(csBit).ConfigureAwait(false);
+            }
+        }
+
+        private CrawlStreamBit GetCrawlStreamBit(CrawlItem crawlItem)
+        {
+            return new CrawlStreamBit
+            {
+                Status = new OperationStatus
+                {
+                    Result = OperationResult.Success,
+                },
+                CrawlItem = crawlItem,
+                CrawlProgressMarker = new CrawlCheckpoint
+                {
+                    CustomMarkerData = crawlItem.ItemId,
+                },
+            };
+        }
+
+        private IncrementalCrawlStreamBit GetIncrementalCrawlStreamBit(IncrementalCrawlItem crawlItem)
+        {
+            return new IncrementalCrawlStreamBit
+            {
+                Status = new OperationStatus
+                {
+                    Result = OperationResult.Success,
+                },
+                CrawlItem = crawlItem,
+                CrawlProgressMarker = new CrawlCheckpoint
+                {
+                    CustomMarkerData = crawlItem.ItemId,
+                },
+            };
         }
     }
 }
