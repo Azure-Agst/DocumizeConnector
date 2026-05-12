@@ -1,14 +1,15 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using DocumizeConnector.Models;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Graph.Connectors.Contracts.Grpc;
 using Newtonsoft.Json;
+using Serilog;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using DocumizeConnector.Models;
-using Serilog;
 
 namespace DocumizeConnector.Data
 {
@@ -31,6 +32,7 @@ namespace DocumizeConnector.Data
         // NOTE: This is the only one that breaks from the pattern.
         public async Task<string> GetBearer(AuthenticationData authData)
         {
+            Log.Information("Fetching Bearer Token");
             using (var httpClient = this.httpClientFactory.CreateClient())
             {
                 var dataSourceURL = authData.DatasourceUrl + "/api/public/authenticate";
@@ -57,7 +59,7 @@ namespace DocumizeConnector.Data
 
         public async Task<List<Label>> GetLabels(AuthenticationData authData, string bearer)
         {
-            return await getDocumizeData<List<Label>>(authData, bearer, "/api/labels");
+            return await getDocumizeData<List<Label>>(authData, bearer, "/api/label");
         }
 
         public async Task<List<Space>> GetSpaces(AuthenticationData authData, string bearer)
@@ -85,7 +87,7 @@ namespace DocumizeConnector.Data
 
         public async Task<T> getDocumizeData<T>(AuthenticationData authData, string bearer, string path)
         {
-            Log.Information("Fatching " + path);
+            Log.Information("Fetching " + path);
             using (var httpClient = this.httpClientFactory.CreateClient())
             {
                 var dataSourceURL = authData.DatasourceUrl + path;
