@@ -16,6 +16,7 @@ namespace DocumizeConnector.Data
     {
         /// <summary>The HTTP client factory</summary>
         private readonly IHttpClientFactory httpClientFactory;
+        private string bearerToken = null;
         private string _tempLabel = "Internal IT";
 
         /// <summary>
@@ -27,12 +28,39 @@ namespace DocumizeConnector.Data
             this.httpClientFactory = serviceProvider.GetService<IHttpClientFactory>();
         }
 
+        public async Task<string> GetBearer(AuthenticationData authData)
+        {
+            using (var httpClient = this.httpClientFactory.CreateClient())
+            {
+                var dataSourceURL = authData.DatasourceUrl + "/api/public/authenticate";
+                var request = new HttpRequestMessage(HttpMethod.Post, new Uri(dataSourceURL));
+
+                // NOTE: This is the only one that breaks from the pattern.
+                request.Headers.Add("Authorization", "Basic " + authData.BasicCredential.ToString());
+                Log.Debug(authData.BasicCredential.ToString());
+
+                var response = await httpClient.SendAsync(request);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseString = await response.Content.ReadAsStringAsync();
+                    var authRes = JsonConvert.DeserializeObject<DocuAuth>(responseString);
+                    return authRes.Bearer;
+                }
+                else
+                {
+                    throw new HttpRequestException(response.ReasonPhrase, null, statusCode: response.StatusCode);
+                }
+            }
+        }
+
         public async Task<List<Label>> GetLabels(AuthenticationData authData)
         {
             using (var httpClient = this.httpClientFactory.CreateClient())
             {
                 var dataSourceURL = authData.DatasourceUrl + "/api/labels";
                 var request = new HttpRequestMessage(HttpMethod.Get, new Uri(dataSourceURL));
+                request = await FormatRequest(authData, request);
                 var response = await httpClient.SendAsync(request);
                 
                 if (response.IsSuccessStatusCode)
@@ -54,6 +82,7 @@ namespace DocumizeConnector.Data
             {
                 var dataSourceURL = authData.DatasourceUrl + "/api/space";
                 var request = new HttpRequestMessage(HttpMethod.Get, new Uri(dataSourceURL));
+                request = await FormatRequest(authData, request);
                 var response = await httpClient.SendAsync(request);
 
                 if (response.IsSuccessStatusCode)
@@ -75,6 +104,7 @@ namespace DocumizeConnector.Data
             {
                 var dataSourceURL = authData.DatasourceUrl + "/api/documents?space=" + space.ID;
                 var request = new HttpRequestMessage(HttpMethod.Get, new Uri(dataSourceURL));
+                request = await FormatRequest(authData, request);
                 var response = await httpClient.SendAsync(request);
 
                 if (response.IsSuccessStatusCode)
@@ -175,6 +205,13 @@ namespace DocumizeConnector.Data
                 Log.Error(ex.Message);
                 throw;
             }
+        }
+
+        private async Task<HttpRequestMessage> FormatRequest(AuthenticationData authData, HttpRequestMessage request)
+        {
+            if (bearerToken == null) bearerToken = await GetBearer(authData);
+            request.Headers.Add("Authorization", "Bearer " + bearerToken);
+            return request;
         }
 
     }
