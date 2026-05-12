@@ -51,7 +51,7 @@ namespace DocumizeConnector.Connector
 
                     if (response.IsSuccessStatusCode)
                     {
-                        return this.BuildAuthValidationResponse(true, "Not Implemented");
+                        return this.BuildAuthValidationResponse(true, "Authenticated");
                     }
                     else
                     {
