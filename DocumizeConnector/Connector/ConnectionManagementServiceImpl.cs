@@ -114,8 +114,8 @@ namespace DocumizeConnector.Connector
                 if (!string.IsNullOrWhiteSpace(request.CustomConfiguration.Configuration))
                 {
                     var obj = JsonConvert.DeserializeObject<CustomParams>(request.CustomConfiguration.Configuration);
-                    Log.Information("Params: " + request.CustomConfiguration.Configuration.ToString());
-                    Log.Information("Parsed: " + obj.ToString());
+                    //Log.Information("Params: " + request.CustomConfiguration.Configuration.ToString());
+                    //Log.Information("Parsed: " + obj.ToString());
                 }
                 else
                 {

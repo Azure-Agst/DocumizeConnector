@@ -131,8 +131,8 @@ namespace DocumizeConnector.Data
 
                     // Find label
                     var labels = await GetLabels(authData, bearer);
-                    var relLabel = labels.FirstOrDefault(x => x.Name == _tempLabel);
-                    if (relLabel == null) throw new Exception("No label for " + _tempLabel + " found!");
+                    var relLabel = labels.FirstOrDefault(x => x.Name == customParams.Label);
+                    if (relLabel == null) throw new Exception("No label for " + customParams.Label + " found!");
 
                     // Find space
                     var spaces = await GetSpaces(authData, bearer);
@@ -171,7 +171,7 @@ namespace DocumizeConnector.Data
             }
             catch (Exception ex)
             {
-                Log.Error(ex.Message);
+                Log.Error(ex, "Error");
                 throw;
             }
         }
@@ -190,8 +190,8 @@ namespace DocumizeConnector.Data
 
                     // Find label
                     var labels = await GetLabels(authData, bearer);
-                    var relLabel = labels.FirstOrDefault(x => x.Name == _tempLabel);
-                    if (relLabel == null) throw new Exception("No label for " + _tempLabel + " found!");
+                    var relLabel = labels.FirstOrDefault(x => x.Name == customParams.Label);
+                    if (relLabel == null) throw new Exception("No label for " + customParams.Label + " found!");
 
                     // Find space
                     var spaces = await GetSpaces(authData, bearer);
@@ -233,7 +233,7 @@ namespace DocumizeConnector.Data
             }
             catch (Exception ex)
             {
-                Log.Error(ex.Message);
+                Log.Error(ex, "Error");
                 throw;
             }
         }
