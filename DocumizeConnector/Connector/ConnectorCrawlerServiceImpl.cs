@@ -4,16 +4,17 @@
 // </copyright>
 // ---------------------------------------------------------------------------
 
+using DocumizeConnector.Data;
+using DocumizeConnector.Models;
 using Grpc.Core;
 using Microsoft.Graph.Connectors.Contracts.Grpc;
+using Newtonsoft.Json;
 using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using static Microsoft.Graph.Connectors.Contracts.Grpc.ConnectorCrawlerService;
-
-using DocumizeConnector.Data;
 
 namespace DocumizeConnector.Connector
 {
@@ -45,7 +46,8 @@ namespace DocumizeConnector.Connector
                 while (itemsRemaining)
                 {
                     var dataLoader = new DataLoader();
-                    (crawlItems, itemsRemaining) = await dataLoader.ExecuteFullCrawl(request.AuthenticationData);
+                    var customParams = JsonConvert.DeserializeObject<CustomParams>(request.CustomConfiguration.Configuration);
+                    (crawlItems, itemsRemaining) = await dataLoader.ExecuteFullCrawl(request.AuthenticationData, customParams);
                     IEnumerator<CrawlItem> ciEnumerator = crawlItems.GetEnumerator();
                     while (ciEnumerator.MoveNext())
                     {
@@ -104,7 +106,8 @@ namespace DocumizeConnector.Connector
                 while (itemsRemaining)
                 {
                     var dataLoader = new DataLoader();
-                    (crawlItems, itemsRemaining, lastModifiedAt) = await dataLoader.ExecuteIncrementalCrawl(request.AuthenticationData, lastModifiedAt);
+                    var customParams = JsonConvert.DeserializeObject<CustomParams>(request.CustomConfiguration.Configuration);
+                    (crawlItems, itemsRemaining, lastModifiedAt) = await dataLoader.ExecuteIncrementalCrawl(request.AuthenticationData, customParams, lastModifiedAt);
                     IEnumerator<IncrementalCrawlItem> ciEnumerator = crawlItems.GetEnumerator();
                     while (ciEnumerator.MoveNext())
                     {

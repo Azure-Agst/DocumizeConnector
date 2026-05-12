@@ -113,7 +113,13 @@ namespace DocumizeConnector.Connector
             {
                 if (!string.IsNullOrWhiteSpace(request.CustomConfiguration.Configuration))
                 {
-                    var _ = JsonConvert.DeserializeObject<CustomParams>(request.CustomConfiguration.Configuration);
+                    var obj = JsonConvert.DeserializeObject<CustomParams>(request.CustomConfiguration.Configuration);
+                    Log.Information("Params: " + request.CustomConfiguration.Configuration.ToString());
+                    Log.Information("Parsed: " + obj.ToString());
+                }
+                else
+                {
+                    Log.Information("Params: No configuration passed in!");
                 }
 
                 response = new ValidateCustomConfigurationResponse

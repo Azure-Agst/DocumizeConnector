@@ -116,7 +116,7 @@ namespace DocumizeConnector.Data
          * Full/Incremental Crawl
          */
 
-        public async Task<(List<CrawlItem>, bool)> ExecuteFullCrawl(AuthenticationData authData)
+        public async Task<(List<CrawlItem>, bool)> ExecuteFullCrawl(AuthenticationData authData, CustomParams customParams)
         {
             try
             {
@@ -171,7 +171,7 @@ namespace DocumizeConnector.Data
             }
         }
 
-        public async Task<(List<IncrementalCrawlItem>, bool, DateTime)> ExecuteIncrementalCrawl(AuthenticationData authData, DateTime lastModifiedAt)
+        public async Task<(List<IncrementalCrawlItem>, bool, DateTime)> ExecuteIncrementalCrawl(AuthenticationData authData, CustomParams customParams, DateTime lastModifiedAt)
         {
             try
             {
