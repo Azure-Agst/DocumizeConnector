@@ -16,7 +16,6 @@ namespace DocumizeConnector.Data
     {
         /// <summary>The HTTP client factory</summary>
         private readonly IHttpClientFactory httpClientFactory;
-        private string bearerToken = null;
         private string _tempLabel = "Internal IT";
 
         /// <summary>
@@ -28,14 +27,15 @@ namespace DocumizeConnector.Data
             this.httpClientFactory = serviceProvider.GetService<IHttpClientFactory>();
         }
 
+
+        // NOTE: This is the only one that breaks from the pattern.
         public async Task<string> GetBearer(AuthenticationData authData)
         {
             using (var httpClient = this.httpClientFactory.CreateClient())
             {
                 var dataSourceURL = authData.DatasourceUrl + "/api/public/authenticate";
                 var request = new HttpRequestMessage(HttpMethod.Post, new Uri(dataSourceURL));
-
-                // NOTE: This is the only one that breaks from the pattern.
+                
                 request.Headers.Add("Authorization", "Basic " + authData.BasicCredential.ToString());
                 Log.Debug(authData.BasicCredential.ToString());
 
@@ -54,20 +54,37 @@ namespace DocumizeConnector.Data
             }
         }
 
-        public async Task<List<Label>> GetLabels(AuthenticationData authData)
+        public async Task<List<Label>> GetLabels(AuthenticationData authData, string bearer)
+        {
+            return await getDocumizeData<List<Label>>(authData, bearer, "/api/labels");
+        }
+
+        public async Task<List<Space>> GetSpaces(AuthenticationData authData, string bearer)
+        {
+            return await getDocumizeData<List<Space>>(authData, bearer, "/api/space");
+        }
+
+        public async Task<List<Document>> GetDocumentsInSpace(AuthenticationData authData, string bearer, Space space)
+        {
+            var path = "/api/documents?space=" + space.ID;
+            return await getDocumizeData<List<Document>>(authData, bearer, path);
+        }
+
+        public async Task<T> getDocumizeData<T>(AuthenticationData authData, string bearer, string path)
         {
             using (var httpClient = this.httpClientFactory.CreateClient())
             {
-                var dataSourceURL = authData.DatasourceUrl + "/api/labels";
+                var dataSourceURL = authData.DatasourceUrl + path;
                 var request = new HttpRequestMessage(HttpMethod.Get, new Uri(dataSourceURL));
-                request = await FormatRequest(authData, request);
+
+                request.Headers.Add("Authorization", "Bearer " + bearer);
+
                 var response = await httpClient.SendAsync(request);
-                
+
                 if (response.IsSuccessStatusCode)
                 {
                     var responseString = await response.Content.ReadAsStringAsync();
-                    var labelList = JsonConvert.DeserializeObject<List<Label>>(responseString);
-                    return labelList;
+                    return JsonConvert.DeserializeObject<T>(responseString);
                 }
                 else
                 {
@@ -76,49 +93,10 @@ namespace DocumizeConnector.Data
             }
         }
 
-        public async Task<List<Space>> GetSpaces(AuthenticationData authData)
-        {
-            using (var httpClient = this.httpClientFactory.CreateClient())
-            {
-                var dataSourceURL = authData.DatasourceUrl + "/api/space";
-                var request = new HttpRequestMessage(HttpMethod.Get, new Uri(dataSourceURL));
-                request = await FormatRequest(authData, request);
-                var response = await httpClient.SendAsync(request);
 
-                if (response.IsSuccessStatusCode)
-                {
-                    var responseString = await response.Content.ReadAsStringAsync();
-                    var spaceList = JsonConvert.DeserializeObject<List<Space>>(responseString);
-                    return spaceList;
-                }
-                else
-                {
-                    throw new HttpRequestException(response.ReasonPhrase, null, statusCode: response.StatusCode);
-                }
-            }
-        }
-
-        public async Task<List<Document>> GetDocumentsInSpace(AuthenticationData authData, Space space)
-        {
-            using (var httpClient = this.httpClientFactory.CreateClient())
-            {
-                var dataSourceURL = authData.DatasourceUrl + "/api/documents?space=" + space.ID;
-                var request = new HttpRequestMessage(HttpMethod.Get, new Uri(dataSourceURL));
-                request = await FormatRequest(authData, request);
-                var response = await httpClient.SendAsync(request);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var responseString = await response.Content.ReadAsStringAsync();
-                    var docList = JsonConvert.DeserializeObject<List<Document>>(responseString);
-                    return docList;
-                }
-                else
-                {
-                    throw new HttpRequestException(response.ReasonPhrase, null, statusCode: response.StatusCode);
-                }
-            }
-        }
+        /*
+         * Full/Incremental Crawl
+         */
 
         public async Task<(List<CrawlItem>, bool)> ExecuteFullCrawl(AuthenticationData authData)
         {
@@ -129,13 +107,16 @@ namespace DocumizeConnector.Data
 
                 using (var httpClient = this.httpClientFactory.CreateClient())
                 {
+                    // Get Bearer
+                    var bearer = await GetBearer(authData);
+
                     // Find label
-                    var labels = await GetLabels(authData);
+                    var labels = await GetLabels(authData, bearer);
                     var relLabel = labels.FirstOrDefault(x => x.Name == _tempLabel);
                     if (relLabel == null) throw new Exception("No label for " + _tempLabel + " found!");
 
                     // Find space
-                    var spaces = await GetSpaces(authData);
+                    var spaces = await GetSpaces(authData, bearer);
                     var relSpaces = spaces.Where(x => x.labelId == relLabel.ID);
                     if (relSpaces == null) return (crawlItems, false);
 
@@ -143,7 +124,7 @@ namespace DocumizeConnector.Data
                     foreach (var space in relSpaces)
                     {
                         // Get all docs in space
-                        var spaceDocs = await GetDocumentsInSpace(authData, space);
+                        var spaceDocs = await GetDocumentsInSpace(authData, bearer, space);
                         foreach (var doc in spaceDocs)
                         {
                             // Append to CrawlItem
@@ -172,13 +153,16 @@ namespace DocumizeConnector.Data
 
                 using (var httpClient = this.httpClientFactory.CreateClient())
                 {
+                    // Get Bearer
+                    var bearer = await GetBearer(authData);
+
                     // Find label
-                    var labels = await GetLabels(authData);
+                    var labels = await GetLabels(authData, bearer);
                     var relLabel = labels.FirstOrDefault(x => x.Name == _tempLabel);
                     if (relLabel == null) throw new Exception("No label for " + _tempLabel + " found!");
 
                     // Find space
-                    var spaces = await GetSpaces(authData);
+                    var spaces = await GetSpaces(authData, bearer);
                     var relSpaces = spaces.Where(x => x.labelId == relLabel.ID);
                     if (relSpaces == null) return (crawlItems, false, lastModifiedAt);
 
@@ -186,7 +170,7 @@ namespace DocumizeConnector.Data
                     foreach (var space in relSpaces)
                     {
                         // Get all docs in space
-                        var spaceDocs = await GetDocumentsInSpace(authData, space);
+                        var spaceDocs = await GetDocumentsInSpace(authData, bearer, space);
                         foreach (var doc in spaceDocs)
                         {
                             // Append to CrawlItem
@@ -206,13 +190,5 @@ namespace DocumizeConnector.Data
                 throw;
             }
         }
-
-        private async Task<HttpRequestMessage> FormatRequest(AuthenticationData authData, HttpRequestMessage request)
-        {
-            if (bearerToken == null) bearerToken = await GetBearer(authData);
-            request.Headers.Add("Authorization", "Bearer " + bearerToken);
-            return request;
-        }
-
     }
 }
