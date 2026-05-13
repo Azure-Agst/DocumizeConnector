@@ -39,6 +39,7 @@ namespace DocumizeConnector.Connector
             try
             {
                 Log.Information("GetCrawlStream Entry");
+                Log.Information(context.Peer);
 
                 var crawlItems = new List<CrawlItem>();
                 bool itemsRemaining = true;
@@ -61,7 +62,7 @@ namespace DocumizeConnector.Connector
             }
             catch (Exception ex)
             {
-                Log.Error(ex.ToString());
+                Log.Error(ex, "Error");
                 CrawlStreamBit csBit = new CrawlStreamBit
                 {
                     Status = new OperationStatus

@@ -150,6 +150,7 @@ namespace DocumizeConnector.Data
                         // Get all docs in space & iterate
                         var spaceDocs = await GetDocumentsInSpace(authData, bearer, space);
                         if (spaceDocs == null) continue; // Edge case: Empty Space
+
                         foreach (var doc in spaceDocs)
                         {
                             // Execute in try/catch to handle bad requests
@@ -215,6 +216,7 @@ namespace DocumizeConnector.Data
                     {
                         // Get all docs in space
                         var spaceDocs = await GetDocumentsInSpace(authData, bearer, space);
+                        if (spaceDocs == null) continue; // Edge case: Empty Space
 
                         // Filter out all older documents
                         spaceDocs = spaceDocs.Where(x => x.UpdatedAt > lastModifiedAt).ToList();
