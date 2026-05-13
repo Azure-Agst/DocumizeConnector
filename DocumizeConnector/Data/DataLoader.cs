@@ -20,7 +20,6 @@ namespace DocumizeConnector.Data
     {
         /// <summary>The HTTP client factory</summary>
         private readonly IHttpClientFactory httpClientFactory;
-        private string _tempLabel = "Internal IT";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DataLoader"/>
@@ -122,12 +121,11 @@ namespace DocumizeConnector.Data
          * Full/Incremental Crawl
          */
 
-        public async Task<(List<CrawlItem>, bool)> ExecuteFullCrawl(AuthenticationData authData, CustomParams customParams)
+        public async Task<List<CrawlItem>> ExecuteFullCrawl(AuthenticationData authData, CustomParams customParams)
         {
             try
             {
                 var crawlItems = new List<CrawlItem>();
-                bool itemsRemaining = false;
 
                 using (var httpClient = this.httpClientFactory.CreateClient())
                 {
@@ -142,7 +140,7 @@ namespace DocumizeConnector.Data
                     // Find space
                     var spaces = await GetSpaces(authData, bearer);
                     var relSpaces = spaces.Where(x => x.labelId == relLabel.ID);
-                    if (relSpaces == null) return (crawlItems, false);
+                    if (relSpaces == null) return crawlItems;
 
                     // Iterate through spaces
                     foreach (var space in relSpaces)
@@ -165,7 +163,6 @@ namespace DocumizeConnector.Data
 
                                 // Convert to CrawlItem
                                 crawlItems.Add(doc.ToCrawlItem());
-                                itemsRemaining = true; // Note: Not sure this is needed? Maybe this is for pagination?
 
                             }
                             catch (Exception ex)
@@ -174,12 +171,10 @@ namespace DocumizeConnector.Data
                                 Log.Error(ex, "Failed to fetch data for page " + doc.ID);
                             }
                         }
-
-                        itemsRemaining = false;
                     }
 
                     // Return status
-                    return (crawlItems, itemsRemaining);
+                    return crawlItems;
                 }
             }
             catch (Exception ex)
@@ -189,12 +184,11 @@ namespace DocumizeConnector.Data
             }
         }
 
-        public async Task<(List<IncrementalCrawlItem>, bool, DateTime)> ExecuteIncrementalCrawl(AuthenticationData authData, CustomParams customParams, DateTime lastModifiedAt)
+        public async Task<(List<IncrementalCrawlItem>, DateTime)> ExecuteIncrementalCrawl(AuthenticationData authData, CustomParams customParams, DateTime lastModifiedAt)
         {
             try
             {
                 var crawlItems = new List<IncrementalCrawlItem>();
-                bool itemsRemaining = false;
 
                 using (var httpClient = this.httpClientFactory.CreateClient())
                 {
@@ -209,7 +203,7 @@ namespace DocumizeConnector.Data
                     // Find space
                     var spaces = await GetSpaces(authData, bearer);
                     var relSpaces = spaces.Where(x => x.labelId == relLabel.ID);
-                    if (relSpaces == null) return (crawlItems, false, lastModifiedAt);
+                    if (relSpaces == null) return (crawlItems, lastModifiedAt);
 
                     // Iterate through spaces
                     foreach (var space in relSpaces)
@@ -233,13 +227,12 @@ namespace DocumizeConnector.Data
 
                             // Convert to CrawlItem
                             crawlItems.Add(doc.ToIncrementalCrawlItem());
-                            itemsRemaining = true;
                             lastModifiedAt = doc.UpdatedAt;
                         }
                     }
 
                     // Return status
-                    return (crawlItems, itemsRemaining, lastModifiedAt);
+                    return (crawlItems, lastModifiedAt);
                 }
             }
             catch (Exception ex)

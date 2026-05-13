@@ -41,20 +41,16 @@ namespace DocumizeConnector.Connector
                 Log.Information("GetCrawlStream Entry");
                 Log.Information(context.Peer);
 
-                var crawlItems = new List<CrawlItem>();
-                bool itemsRemaining = true;
+                var dataLoader = new DataLoader();
+                var customParams = JsonConvert.DeserializeObject<CustomParams>(request.CustomConfiguration.Configuration);
 
-                while (itemsRemaining)
+                var crawlItems = await dataLoader.ExecuteFullCrawl(request.AuthenticationData, customParams);
+
+                IEnumerator<CrawlItem> ciEnumerator = crawlItems.GetEnumerator();
+                while (ciEnumerator.MoveNext())
                 {
-                    var dataLoader = new DataLoader();
-                    var customParams = JsonConvert.DeserializeObject<CustomParams>(request.CustomConfiguration.Configuration);
-                    (crawlItems, itemsRemaining) = await dataLoader.ExecuteFullCrawl(request.AuthenticationData, customParams);
-                    IEnumerator<CrawlItem> ciEnumerator = crawlItems.GetEnumerator();
-                    while (ciEnumerator.MoveNext())
-                    {
-                        CrawlStreamBit csBit = this.GetCrawlStreamBit(ciEnumerator.Current);
-                        await responseStream.WriteAsync(csBit).ConfigureAwait(false);
-                    }
+                    CrawlStreamBit csBit = this.GetCrawlStreamBit(ciEnumerator.Current);
+                    await responseStream.WriteAsync(csBit).ConfigureAwait(false);
                 }
 
                 Log.Information("GetCrawlStream Finished");
@@ -96,9 +92,6 @@ namespace DocumizeConnector.Connector
             {
                 Log.Information("GetIncrementalCrawlStream Entry");
 
-                var crawlItems = new List<IncrementalCrawlItem>();
-                bool itemsRemaining = true;
-
                 // Also parse the date here :)
                 DateTime lastModifiedAt = request.PreviousCrawlStartTimeInUtc.ToDateTime();
                 if (DateTime.TryParse(request.CrawlProgressMarker.CustomMarkerData, out DateTime result))
@@ -106,17 +99,17 @@ namespace DocumizeConnector.Connector
                     lastModifiedAt = result;
                 }
 
-                while (itemsRemaining)
+                var dataLoader = new DataLoader();
+                var customParams = JsonConvert.DeserializeObject<CustomParams>(request.CustomConfiguration.Configuration);
+
+                var crawlItems = new List<IncrementalCrawlItem>();
+                (crawlItems, lastModifiedAt) = await dataLoader.ExecuteIncrementalCrawl(request.AuthenticationData, customParams, lastModifiedAt);
+
+                IEnumerator<IncrementalCrawlItem> ciEnumerator = crawlItems.GetEnumerator();
+                while (ciEnumerator.MoveNext())
                 {
-                    var dataLoader = new DataLoader();
-                    var customParams = JsonConvert.DeserializeObject<CustomParams>(request.CustomConfiguration.Configuration);
-                    (crawlItems, itemsRemaining, lastModifiedAt) = await dataLoader.ExecuteIncrementalCrawl(request.AuthenticationData, customParams, lastModifiedAt);
-                    IEnumerator<IncrementalCrawlItem> ciEnumerator = crawlItems.GetEnumerator();
-                    while (ciEnumerator.MoveNext())
-                    {
-                        IncrementalCrawlStreamBit csBit = this.GetIncrementalCrawlStreamBit(ciEnumerator.Current);
-                        await responseStream.WriteAsync(csBit).ConfigureAwait(false);
-                    }
+                    IncrementalCrawlStreamBit csBit = this.GetIncrementalCrawlStreamBit(ciEnumerator.Current);
+                    await responseStream.WriteAsync(csBit).ConfigureAwait(false);
                 }
 
                 Log.Information("GetIncrementalCrawlStream Finished");
