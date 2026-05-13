@@ -65,6 +65,7 @@ namespace DocumizeConnector.Models
                 {
                     Name = nameof(Title),
                     Type = SourcePropertyType.String,
+                    Label = "Title",
                     DefaultSearchAnnotations = (uint)(SearchAnnotations.IsQueryable | SearchAnnotations.IsSearchable | SearchAnnotations.IsRetrievable),
                     RequiredSearchAnnotations = (uint)(SearchAnnotations.IsQueryable | SearchAnnotations.IsSearchable | SearchAnnotations.IsRetrievable),
                 });
@@ -92,6 +93,7 @@ namespace DocumizeConnector.Models
                 {
                     Name = nameof(URL),
                     Type = SourcePropertyType.String,
+                    Label = "url",
                     DefaultSearchAnnotations = (uint)SearchAnnotations.IsRetrievable,
                     RequiredSearchAnnotations = (uint)SearchAnnotations.IsRetrievable,
                 });
@@ -110,6 +112,7 @@ namespace DocumizeConnector.Models
                 {
                     Name = nameof(CreatedAt),
                     Type = SourcePropertyType.DateTime,
+                    Label = "createdDateTime",
                     DefaultSearchAnnotations = (uint)(SearchAnnotations.IsQueryable | SearchAnnotations.IsRetrievable),
                     RequiredSearchAnnotations = (uint)(SearchAnnotations.IsQueryable | SearchAnnotations.IsRetrievable),
                 });
@@ -119,6 +122,7 @@ namespace DocumizeConnector.Models
                 {
                     Name = nameof(UpdatedAt),
                     Type = SourcePropertyType.DateTime,
+                    Label = "lastModifiedDateTime",
                     DefaultSearchAnnotations = (uint)(SearchAnnotations.IsQueryable | SearchAnnotations.IsRetrievable),
                     RequiredSearchAnnotations = (uint)(SearchAnnotations.IsQueryable | SearchAnnotations.IsRetrievable),
                 });
