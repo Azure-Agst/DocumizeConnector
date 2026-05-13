@@ -56,6 +56,8 @@ namespace DocumizeConnector.Models
                 {
                     Name = nameof(ID),
                     Type = SourcePropertyType.String,
+                    DefaultSearchAnnotations = (uint)SearchAnnotations.IsRetrievable,
+                    RequiredSearchAnnotations = (uint)SearchAnnotations.IsRetrievable,
                 });
 
             schema.PropertyList.Add(
@@ -63,6 +65,8 @@ namespace DocumizeConnector.Models
                 {
                     Name = nameof(Title),
                     Type = SourcePropertyType.String,
+                    DefaultSearchAnnotations = (uint)(SearchAnnotations.IsQueryable | SearchAnnotations.IsSearchable | SearchAnnotations.IsRetrievable),
+                    RequiredSearchAnnotations = (uint)(SearchAnnotations.IsQueryable | SearchAnnotations.IsSearchable | SearchAnnotations.IsRetrievable),
                 });
 
             schema.PropertyList.Add(
@@ -70,6 +74,8 @@ namespace DocumizeConnector.Models
                 {
                     Name = nameof(Description),
                     Type = SourcePropertyType.String,
+                    DefaultSearchAnnotations = (uint)(SearchAnnotations.IsSearchable | SearchAnnotations.IsRetrievable),
+                    RequiredSearchAnnotations = (uint)(SearchAnnotations.IsSearchable | SearchAnnotations.IsRetrievable),
                 });
 
             schema.PropertyList.Add(
@@ -77,6 +83,8 @@ namespace DocumizeConnector.Models
                 {
                     Name = nameof(Body),
                     Type = SourcePropertyType.String,
+                    DefaultSearchAnnotations = (uint)SearchAnnotations.IsSearchable,
+                    RequiredSearchAnnotations = (uint)SearchAnnotations.IsSearchable,
                 });
 
             schema.PropertyList.Add(
@@ -84,6 +92,8 @@ namespace DocumizeConnector.Models
                 {
                     Name = nameof(URL),
                     Type = SourcePropertyType.String,
+                    DefaultSearchAnnotations = (uint)SearchAnnotations.IsRetrievable,
+                    RequiredSearchAnnotations = (uint)SearchAnnotations.IsRetrievable,
                 });
 
             schema.PropertyList.Add(
@@ -91,6 +101,8 @@ namespace DocumizeConnector.Models
                 {
                     Name = nameof(Tags),
                     Type = SourcePropertyType.String,
+                    DefaultSearchAnnotations = (uint)(SearchAnnotations.IsQueryable | SearchAnnotations.IsSearchable | SearchAnnotations.IsRetrievable),
+                    RequiredSearchAnnotations = (uint)(SearchAnnotations.IsQueryable | SearchAnnotations.IsSearchable | SearchAnnotations.IsRetrievable),
                 });
 
             schema.PropertyList.Add(
@@ -98,6 +110,8 @@ namespace DocumizeConnector.Models
                 {
                     Name = nameof(CreatedAt),
                     Type = SourcePropertyType.DateTime,
+                    DefaultSearchAnnotations = (uint)(SearchAnnotations.IsQueryable | SearchAnnotations.IsRetrievable),
+                    RequiredSearchAnnotations = (uint)(SearchAnnotations.IsQueryable | SearchAnnotations.IsRetrievable),
                 });
 
             schema.PropertyList.Add(
@@ -105,6 +119,8 @@ namespace DocumizeConnector.Models
                 {
                     Name = nameof(UpdatedAt),
                     Type = SourcePropertyType.DateTime,
+                    DefaultSearchAnnotations = (uint)(SearchAnnotations.IsQueryable | SearchAnnotations.IsRetrievable),
+                    RequiredSearchAnnotations = (uint)(SearchAnnotations.IsQueryable | SearchAnnotations.IsRetrievable),
                 });
 
             return schema;
