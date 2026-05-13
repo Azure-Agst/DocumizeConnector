@@ -112,7 +112,7 @@ namespace DocumizeConnector.Data
                 }
                 else
                 {
-                    throw new HttpRequestException(response.ReasonPhrase, null, statusCode: response.StatusCode);
+                    throw new HttpRequestException(response.ReasonPhrase + " - " + path, null, statusCode: response.StatusCode);
                 }
             }
         }
@@ -147,21 +147,31 @@ namespace DocumizeConnector.Data
                     // Iterate through spaces
                     foreach (var space in relSpaces)
                     {
-                        // Get all docs in space
+                        // Get all docs in space & iterate
                         var spaceDocs = await GetDocumentsInSpace(authData, bearer, space);
                         if (spaceDocs == null) continue; // Edge case: Empty Space
                         foreach (var doc in spaceDocs)
                         {
-                            // Get body (w/ images stripped)
-                            doc.Body = await GetDocumentBody(authData, bearer, doc);
+                            // Execute in try/catch to handle bad requests
+                            try
+                            {
+                                // Get body (w/ images stripped)
+                                doc.Body = await GetDocumentBody(authData, bearer, doc);
 
-                            // Calculate URL
-                            doc.URL = URL.UrlFromDocument(authData.DatasourceUrl, space, doc);
-                            //Log.Information("URL: " + doc.URL);
+                                // Calculate URL
+                                doc.URL = URL.UrlFromDocument(authData.DatasourceUrl, space, doc);
+                                //Log.Information("URL: " + doc.URL);
 
-                            // Convert to CrawlItem
-                            crawlItems.Add(doc.ToCrawlItem());
-                            itemsRemaining = true; // Note: Not sure this is needed? Maybe this is for pagination?
+                                // Convert to CrawlItem
+                                crawlItems.Add(doc.ToCrawlItem());
+                                itemsRemaining = true; // Note: Not sure this is needed? Maybe this is for pagination?
+
+                            }
+                            catch (Exception ex)
+                            {
+                                // In the case a page failed to process correctly, log it.
+                                Log.Error(ex, "Failed to fetch data for page " + doc.ID);
+                            }
                         }
 
                         itemsRemaining = false;
@@ -173,7 +183,7 @@ namespace DocumizeConnector.Data
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Error");
+                Log.Error(ex, "Full crawl failed");
                 throw;
             }
         }
